@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: debug-app
+  namespace: default
+  labels:
+    app: debug-app
+spec:
+  selector:
+    matchLabels:
+      app: debug-app
+  template:
+    metadata:
+      name: debug-app
+      labels:
+        app: debug-app
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: debug-app
+        imagePullPolicy: Always
+        image: quay.io/julienbalestra/debug-app:master
+        command:
+        - /usr/local/bin/debug-app
+        volumeMounts:
+        - name: debug-app
+          mountPath: /var/lib/debug-app/
+        livenessProbe:
+          exec:
+            command:
+            - /usr/local/bin/debug-app
+            - -health
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 10
+          timeoutSeconds: 7
+
+      volumes:
+      - emptyDir:
+        name: debug-app
