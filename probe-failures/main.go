@@ -27,6 +27,7 @@ type healthCheck struct {
 	healthy     bool
 	maxFork     int
 	currentFork int
+	probeSleep  bool
 }
 
 func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,9 +62,11 @@ func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
 
 	// jitter timeouts
 	randInt := rand.Intn(10)
-	sec := time.Duration(randInt) * time.Second
-	log.Printf("Sleeping %s", sec.String())
-	<-time.After(sec)
+	if h.probeSleep {
+		sec := time.Duration(randInt) * time.Second
+		log.Printf("Sleeping %s", sec.String())
+		<-time.After(sec)
+	}
 
 	// dirty open: never close fd
 	f, err := os.OpenFile(fmt.Sprintf("/tmp/dirty-%d", randInt), os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.ModePerm)
@@ -102,6 +105,7 @@ func (h *healthCheck) forkHandler(w http.ResponseWriter, _ *http.Request) {
 
 func main() {
 	execProbe := flag.Bool("health", false, "use this to probe the http listener")
+	probeSleep := flag.Bool("probe-sleep", false, "use this to introduce a random sleep during probe")
 	listenerPort := flag.Int("port", defaultListenerPort, "specify the port for the http listener")
 	healthDir := flag.String("health-dir", defaultHealthDir, "specify the dir for the health handler")
 	maxFork := flag.Int("fork", 3, "specify the number of dirty fork during probing")
@@ -147,9 +151,10 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
 	health := &healthCheck{
-		healthDir: *healthDir,
-		healthy:   true,
-		maxFork:   *maxFork,
+		healthDir:  *healthDir,
+		healthy:    true,
+		maxFork:    *maxFork,
+		probeSleep: *probeSleep,
 	}
 	http.HandleFunc("/health", health.healthHandler)
 	http.HandleFunc("/fork", health.forkHandler)
