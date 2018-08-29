@@ -24,7 +24,9 @@ const (
 type healthCheck struct {
 	healthDir string
 	sync.Mutex
-	healthy bool
+	healthy     bool
+	maxFork     int
+	currentFork int
 }
 
 func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,20 +90,39 @@ func (h *healthCheck) switchHealthyHandler(_ http.ResponseWriter, _ *http.Reques
 	log.Printf("Switched as healthy: %v", h.healthy)
 }
 
+func (h *healthCheck) forkHandler(w http.ResponseWriter, _ *http.Request) {
+	h.Lock()
+	defer h.Unlock()
+	if h.currentFork >= h.maxFork {
+		w.WriteHeader(403)
+		return
+	}
+	log.Printf("Fork OK: %d/%d", h.currentFork, h.maxFork)
+}
+
 func main() {
 	execProbe := flag.Bool("health", false, "use this to probe the http listener")
 	listenerPort := flag.Int("port", defaultListenerPort, "specify the port for the http listener")
 	healthDir := flag.String("health-dir", defaultHealthDir, "specify the dir for the health handler")
+	maxFork := flag.Int("fork", 3, "specify the number of dirty fork during probing")
 	flag.Parse()
 
 	if *execProbe {
 		log.Println("Starting probe")
-		// fork but don't wait
-		exec.Command("/bin/sh", "-c", "nohup tail -f "+path.Join(*healthDir, "health-file")).Start()
 		c := &http.Client{
 			Timeout: time.Second * 30,
 		}
-		resp, err := c.Get(fmt.Sprintf("http://127.0.0.1:%d/health", *listenerPort))
+		// fork but don't wait
+		resp, err := c.Get(fmt.Sprintf("http://127.0.0.1:%d/fork", *listenerPort))
+		if err != nil {
+			log.Fatalf("Error while probing: %v", err)
+			// exit 1
+		}
+		if resp.StatusCode == http.StatusOK {
+			exec.Command("/bin/sh", "-c", "nohup tail -f "+path.Join(*healthDir, "health-file")).Start()
+		}
+
+		resp, err = c.Get(fmt.Sprintf("http://127.0.0.1:%d/health", *listenerPort))
 		if err != nil {
 			log.Fatalf("Error while probing: %v", err)
 			// exit 1
@@ -128,8 +149,10 @@ func main() {
 	health := &healthCheck{
 		healthDir: *healthDir,
 		healthy:   true,
+		maxFork:   *maxFork,
 	}
 	http.HandleFunc("/health", health.healthHandler)
+	http.HandleFunc("/fork", health.forkHandler)
 	http.HandleFunc("/switch", health.switchHealthyHandler)
 	listenerBind := fmt.Sprintf("0.0.0.0:%d", *listenerPort)
 	log.Printf("Starting to listen on %s", listenerBind)
