@@ -8,12 +8,12 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"sync"
 	"syscall"
 	"time"
-	"os/exec"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 type healthCheck struct {
 	healthDir string
 	sync.Mutex
-	healthy   bool
+	healthy bool
 }
 
 func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +97,7 @@ func main() {
 	if *execProbe {
 		log.Println("Starting probe")
 		// fork but don't wait
-		exec.Command("/bin/sh", "-c", "nohup tail -f " + path.Join(*healthDir, "health-file")).Start()
+		exec.Command("/bin/sh", "-c", "nohup tail -f "+path.Join(*healthDir, "health-file")).Start()
 		c := &http.Client{
 			Timeout: time.Second * 30,
 		}

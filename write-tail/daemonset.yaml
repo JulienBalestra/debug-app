@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: write-tail
+  namespace: default
+  labels:
+    app: write-tail
+spec:
+  selector:
+    matchLabels:
+      app: write-tail
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      name: write-tail
+      labels:
+        app: write-tail
+    spec:
+      hostNetwork: true
+      hostPID: true
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: write-tail
+        imagePullPolicy: Always
+        image: quay.io/julienbalestra/debug-app:latest
+        command:
+        - /usr/local/bin/write-tail

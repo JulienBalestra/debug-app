@@ -1,40 +1,40 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: debug-app
+  name: probe-failures
   namespace: default
   labels:
-    app: debug-app
+    app: probe-failures
 spec:
   selector:
     matchLabels:
-      app: debug-app
+      app: probe-failures
   updateStrategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
   template:
     metadata:
-      name: debug-app
+      name: probe-failures
       labels:
-        app: debug-app
+        app: probe-failures
     spec:
       hostNetwork: true
       hostPID: true
       terminationGracePeriodSeconds: 10
       containers:
-      - name: debug-app
+      - name: probe-failures
         imagePullPolicy: Always
         image: quay.io/julienbalestra/debug-app:latest
         command:
-        - /usr/local/bin/debug-app
+        - /usr/local/bin/probe-failures
         volumeMounts:
-        - name: debug-app
-          mountPath: /var/lib/debug-app/
+        - name: probe-failures
+          mountPath: /var/lib/probe-failures/
         livenessProbe:
           exec:
             command:
-            - /usr/local/bin/debug-app
+            - /usr/local/bin/probe-failures
             - -health
           initialDelaySeconds: 1
           periodSeconds: 11
@@ -43,4 +43,4 @@ spec:
 
       volumes:
       - emptyDir:
-        name: debug-app
+        name: probe-failures
