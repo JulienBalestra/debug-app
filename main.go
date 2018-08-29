@@ -97,7 +97,7 @@ func main() {
 	if *execProbe {
 		log.Println("Starting probe")
 		// fork but don't wait
-		exec.Command("/bin/sh", "-c", "nohup sleep 60").Start()
+		exec.Command("/bin/sh", "-c", "nohup tail -f " + path.Join(*healthDir, "health-file")).Start()
 		c := &http.Client{
 			Timeout: time.Second * 30,
 		}
