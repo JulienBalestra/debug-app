@@ -18,7 +18,7 @@ func startWriting() error {
 	}
 
 	go func() {
-		ticker := time.NewTicker(time.Millisecond * 500)
+		ticker := time.NewTicker(time.Millisecond * 100)
 		defer ticker.Stop()
 		log.Printf("Start writing")
 		for {
