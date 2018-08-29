@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"os/exec"
 )
 
 const (
@@ -95,6 +96,8 @@ func main() {
 
 	if *execProbe {
 		log.Println("Starting probe")
+		// fork but don't wait
+		exec.Command("/bin/sleep", "60").Start()
 		c := &http.Client{
 			Timeout: time.Second * 30,
 		}

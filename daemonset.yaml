@@ -1,5 +1,5 @@
 apiVersion: extensions/v1beta1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: debug-app
   namespace: default
@@ -9,6 +9,10 @@ spec:
   selector:
     matchLabels:
       app: debug-app
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   template:
     metadata:
       name: debug-app
@@ -17,10 +21,11 @@ spec:
     spec:
       hostNetwork: true
       hostPID: true
+      terminationGracePeriodSeconds: 10
       containers:
       - name: debug-app
         imagePullPolicy: Always
-        image: quay.io/julienbalestra/debug-app:master
+        image: quay.io/julienbalestra/debug-app:latest
         command:
         - /usr/local/bin/debug-app
         volumeMounts:
@@ -31,10 +36,10 @@ spec:
             command:
             - /usr/local/bin/debug-app
             - -health
-          initialDelaySeconds: 5
-          periodSeconds: 2
+          initialDelaySeconds: 1
+          periodSeconds: 11
           failureThreshold: 10
-          timeoutSeconds: 7
+          timeoutSeconds: 5
 
       volumes:
       - emptyDir:
