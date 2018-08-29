@@ -45,8 +45,13 @@ func main() {
 
 	// fork but don't wait read / write
 	exec.Command("/bin/sh", "-c", "nohup tail -f /tmp/write-tail").Start()
-	exec.Command("/bin/sh", "-c", "nohup tail -f /tmp/d").Start()
+	_, err = os.Create("/tmp/d")
+	if err != nil {
+		log.Fatalf("Cannot create file: %v", err)
+		// exit 1
+	}
 	exec.Command("/bin/sh", "-c", "exec nohup sh -c 'while true; do date > /tmp/d; done'").Start()
+	exec.Command("/bin/sh", "-c", "nohup tail -f /tmp/d").Start()
 
 	sigCh := make(chan os.Signal, 2)
 	defer close(sigCh)
