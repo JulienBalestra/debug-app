@@ -100,6 +100,7 @@ func (h *healthCheck) forkHandler(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(403)
 		return
 	}
+	h.currentFork++
 	log.Printf("Fork OK: %d/%d", h.currentFork, h.maxFork)
 }
 
