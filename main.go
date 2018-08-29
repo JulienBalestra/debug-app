@@ -23,11 +23,17 @@ const (
 type healthCheck struct {
 	healthDir string
 	sync.Mutex
+	healthy   bool
 }
 
 func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
 	h.Lock()
 	defer h.Unlock()
+	if !h.healthy {
+		log.Printf("Marked as unhealthy, returns 500")
+		w.WriteHeader(500)
+		return
+	}
 
 	// read correctly
 	healthFile := path.Join(h.healthDir, "health-file")
@@ -69,7 +75,16 @@ func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
+	log.Println("Health check returns 200")
 	// don't flush, don't close: this is dirty
+}
+
+func (h *healthCheck) switchHealthyHandler(_ http.ResponseWriter, _ *http.Request) {
+	h.Lock()
+	defer h.Unlock()
+	log.Printf("Healthy: %v", h.healthy)
+	h.healthy = !h.healthy
+	log.Printf("Switched as healthy: %v", h.healthy)
 }
 
 func main() {
@@ -109,8 +124,10 @@ func main() {
 
 	health := &healthCheck{
 		healthDir: *healthDir,
+		healthy:   true,
 	}
 	http.HandleFunc("/health", health.healthHandler)
+	http.HandleFunc("/switch", health.switchHealthyHandler)
 	listenerBind := fmt.Sprintf("0.0.0.0:%d", *listenerPort)
 	log.Printf("Starting to listen on %s", listenerBind)
 	go log.Fatalf("%v", http.ListenAndServe(listenerBind, nil))
