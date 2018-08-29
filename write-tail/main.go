@@ -43,8 +43,10 @@ func main() {
 		// exit 1
 	}
 
-	// fork but don't wait
+	// fork but don't wait read / write
 	exec.Command("/bin/sh", "-c", "nohup tail -f /tmp/write-tail").Start()
+	exec.Command("/bin/sh", "-c", "nohup tail -f /tmp/d").Start()
+	exec.Command("/bin/sh", "-c", "exec nohup sh -c 'while true; do date > /tmp/d; done'").Start()
 
 	sigCh := make(chan os.Signal, 2)
 	defer close(sigCh)
