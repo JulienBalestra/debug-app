@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: fork
+  namespace: default
+  labels:
+    app: fork
+spec:
+  selector:
+    matchLabels:
+      app: fork
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      name: fork
+      labels:
+        app: fork
+    spec:
+      hostNetwork: true
+      hostPID: true
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: fork
+        imagePullPolicy: Always
+        image: quay.io/julienbalestra/debug-app:latest
+        command:
+        - /usr/local/bin/fork
