@@ -1,3 +1,5 @@
 /.idea
+/fork/fork
 /probe-failures/probe-failures
+/probe-sleep/probe-sleep
 /write-tail/write-tail
