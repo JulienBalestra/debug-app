@@ -21,7 +21,7 @@ type healthCheck struct {
 }
 
 func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("/bin/sh", "-c", "cat /dev/urandom | tr -dc 'a-zA-Z0-9")
+	cmd := exec.Command("/bin/sh", "-c", "cat /dev/urandom | tr -dc 'a-zA-Z0-9'")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	_ = cmd.Start()
