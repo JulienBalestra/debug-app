@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: probe-sleep
+  namespace: default
+  labels:
+    app: probe-sleep
+spec:
+  selector:
+    matchLabels:
+      app: probe-sleep
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      name: probe-sleep
+      labels:
+        app: probe-sleep
+    spec:
+      hostNetwork: true
+      hostPID: true
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: probe-sleep
+        imagePullPolicy: Always
+        image: quay.io/julienbalestra/debug-app:latest
+        command:
+        - /usr/local/bin/probe-sleep
+        - -sleep
+        - "600"
+        livenessProbe:
+          exec:
+            command:
+            - /usr/local/bin/probe-sleep
+            - -health
+          initialDelaySeconds: 5
+          periodSeconds: 60
+          failureThreshold: 5
+          timeoutSeconds: 30

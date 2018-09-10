@@ -10,3 +10,4 @@ COPY --from=builder /go/src/github.com/JulienBalestra/debug-app/probe-failures/p
 COPY --from=builder /go/src/github.com/JulienBalestra/debug-app/write-tail/write-tail /usr/local/bin/write-tail
 COPY --from=builder /go/src/github.com/JulienBalestra/debug-app/fork/fork /usr/local/bin/fork
 COPY --from=builder /go/src/github.com/JulienBalestra/debug-app/probe-sleep/probe-sleep /usr/local/bin/probe-sleep
+COPY --from=builder /go/src/github.com/JulienBalestra/debug-app/probe-sleep/probe-write /usr/local/bin/probe-write
