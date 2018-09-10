@@ -27,13 +27,11 @@ spec:
         imagePullPolicy: Always
         image: quay.io/julienbalestra/debug-app:latest
         command:
-        - /usr/local/bin/probe-sleep
-        - -sleep
-        - "600"
+        - /usr/local/bin/probe-write
         livenessProbe:
           exec:
             command:
-            - /usr/local/bin/probe-sleep
+            - /usr/local/bin/probe-write
             - -health
           initialDelaySeconds: 5
           periodSeconds: 60
