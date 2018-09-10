@@ -3,32 +3,37 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 const (
 	defaultListenerPort = 8787
 )
 
-type healthCheck struct{}
+type healthCheck struct {
+	sleepDelay time.Duration
+}
 
 func (h *healthCheck) healthHandler(w http.ResponseWriter, r *http.Request) {
-	urandom, err := os.Open("/dev/urandom")
-	if err != nil {
-		panic(err)
-	}
-	defer urandom.Close()
-	io.Copy(os.Stdout, urandom)
+	cmd := exec.Command("/bin/sh", "-c", "cat /dev/urandom | tr -dc 'a-zA-Z0-9")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	_ = cmd.Start()
+	// don't wait
+	log.Printf("Sleeping %s", h.sleepDelay)
+	time.Sleep(h.sleepDelay)
 }
 
 func main() {
 	execProbe := flag.Bool("health", false, "use this to probe the http listener")
 	listenerPort := flag.Int("port", defaultListenerPort, "specify the port for the http listener")
+	sleepDelay := flag.Int("sleep", 120, "specify the seconds to sleep over the probe")
 	flag.Parse()
 	sigCh := make(chan os.Signal)
 	defer close(sigCh)
@@ -51,7 +56,9 @@ func main() {
 	}
 
 	log.Println("Starting listener ...")
-	health := &healthCheck{}
+	health := &healthCheck{
+		sleepDelay: time.Second * time.Duration(*sleepDelay),
+	}
 	http.HandleFunc("/health", health.healthHandler)
 	listenerBind := fmt.Sprintf("0.0.0.0:%d", *listenerPort)
 	log.Printf("Starting to listen on %s", listenerBind)

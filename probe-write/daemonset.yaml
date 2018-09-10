@@ -1,33 +1,35 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: probe-sleep
+  name: probe-write
   namespace: default
   labels:
-    app: probe-sleep
+    app: probe-write
 spec:
   selector:
     matchLabels:
-      app: probe-sleep
+      app: probe-write
   updateStrategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
   template:
     metadata:
-      name: probe-sleep
+      name: probe-write
       labels:
-        app: probe-sleep
+        app: probe-write
     spec:
       hostNetwork: true
       hostPID: true
       terminationGracePeriodSeconds: 10
       containers:
-      - name: probe-sleep
+      - name: probe-write
         imagePullPolicy: Always
         image: quay.io/julienbalestra/debug-app:latest
         command:
         - /usr/local/bin/probe-write
+        - -sleep
+        - "600"
         livenessProbe:
           exec:
             command:
@@ -35,5 +37,5 @@ spec:
             - -health
           initialDelaySeconds: 5
           periodSeconds: 60
-          failureThreshold: 5
-          timeoutSeconds: 30
+          failureThreshold: 10
+          timeoutSeconds: 601
